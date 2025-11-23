@@ -1,0 +1,51 @@
+# ----------------------
+# OS generated files
+# ----------------------
+.DS_Store
+Thumbs.db
+*.swp
+*~
+desktop.ini
+
+# ----------------------
+# Python
+# ----------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+dist/
+build/
+*.log
+
+# ----------------------
+# Rust / Cargo
+# ----------------------
+target/
+**/*.rs.bk
+**/*.rlib
+
+# ----------------------
+# Virtual environments
+# ----------------------
+venv/
+env/
+.env
+
+# ----------------------
+# IDEs / Editors
+# ----------------------
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# ----------------------
+# Misc
+# ----------------------
+*.tmp
+*.bak
+*.swp
+*.lock
