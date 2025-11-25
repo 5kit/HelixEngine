@@ -18,9 +18,11 @@ pub struct MeshObject {
 #[pymethods]
 impl MeshObject {
     #[new]
-    pub fn new() -> Self {
-        MeshObject {
-        }
+    pub fn new(name: String, mesh_data: usize, mesh_material: usize) -> Self {
+        self.name = name;
+        self.mesh_data = mesh_data;
+        self.material = material
+        self.transform = Transform();
     }
 }
 
@@ -50,7 +52,7 @@ pub struct Material {
 pub struct Transform {
     #[pyo3(get, set)]
     pub position: Vec3,
-    pub rotation: Quat,
+    pub rotation: Vec3,
     pub scale: Vec3,
 }
 
@@ -59,18 +61,38 @@ impl Transform {
     #[new]
     pub fn new() -> Self {
         Transform {
-            position: ,
-            rotation: [0.0, 0.0, 0.0, 0.0], # a + bi + cj + dk
-            scale: [1.0, 1.0, 1.0],
+            position: Vec3::ZERO,
+            rotation: Vec3::ZERO, // Roll, Pitch, Yaw in radians
+            scale: Vec3::ONE,
         }
     }
 
     pub fn get_matrix(&self) -> Mat4 {
-        [
-            [1.0, 0.0, 0.0, self.position[0]],
-            [0.0, 1.0, 0.0, self.position[1]],
-            [0.0, 0.0, 1.0, self.position[2]],
-            [0.0, 0.0, 0.0, 1.0],
-        ]
+        // Roll 
+        let roll   = Quat::from_rotation_x(self.rotation[0]);
+        // Pitch
+        let pitch  = Quat::from_rotation_y(self.rotation[1]);
+        // Yaw
+        let yaw    = Quat::from_rotation_z(self.rotation[2]);
+        
+        // apply roll -> pitch -> yaw
+        let q = (yaw * pitch * roll).normalize();
+
+        // convert to 4x4 matrix and also apply a local scale
+        let transform_matrix = Mat4::from_rotation_translation(q, self.position) * Mat4::from_scale(self.scale);
+
+        return transform_matrix;
+    }
+
+    pub fn translate(&mut self, delta: Vec3) {
+        self.position += delta;
+    }
+
+    pub fn rotate(&mut self, delta: Vec3) {
+        self.rotation = delta * self.rotation;
+    }
+
+    pub fn scale(&mut self, s: Vec3) {
+        self.scale *= s;
     }
 }
