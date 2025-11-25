@@ -1,4 +1,4 @@
-from helix_render import Transform
+from helix_render import Transform, Mesh
 from math import pi
 import numpy as np
 
@@ -28,3 +28,6 @@ new_pos = np_mat.T.dot(pos.T).T
 print("Position after:")
 printMatrix(new_pos)
 
+mesh = Mesh()
+mesh.load_obj("HelixRender/examples/cube.obj")
+print(f"Loaded mesh with {mesh.vertex_count()} vertices and {mesh.face_count()} faces.")
