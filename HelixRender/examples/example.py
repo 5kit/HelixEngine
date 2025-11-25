@@ -1,4 +1,4 @@
-from helix_render import Transform, Mesh
+from helix_render import Transform, Mesh, MeshObject
 from math import pi
 import numpy as np
 
@@ -31,3 +31,7 @@ printMatrix(new_pos)
 mesh = Mesh()
 mesh.load_obj("HelixRender/examples/cube.obj")
 print(f"Loaded mesh with {mesh.vertex_count()} vertices and {mesh.face_count()} faces.")
+
+meshes = [mesh]
+
+obj = MeshObject("Cube", 0)

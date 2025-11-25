@@ -5,7 +5,40 @@ use glam::Quat;
 
 use std::fs::File;
 use std::io::{self, BufRead};
-use std::path::Path;
+
+#[pyclass]
+pub struct MeshObject {
+    #[pyo3(get, set)]
+    name: String,
+    mesh_index: usize,
+    #[pyo3(get, set)]
+    transform: Transform,
+}
+
+#[pymethods]
+impl MeshObject {
+    #[new]
+    pub fn new(name: String, mesh_index: usize) -> Self {
+        MeshObject {
+            name,
+            mesh_index,
+            transform: Transform::new(),
+        }
+    }
+
+    pub fn set_scale(&mut self, s: [f32; 3]) {
+        self.transform.scale = Vec3::from(s);
+    }
+
+    pub fn set_position(&mut self, p: [f32; 3]) {
+        self.transform.position = Vec3::from(p);
+    }
+
+    pub fn set_rotation(&mut self, r: [f32; 3]) {
+        self.transform.rotation = Vec3::from(r);
+    }
+}
+
 
 #[pyclass]
 pub struct Mesh {
@@ -89,6 +122,7 @@ impl Mesh {
 
 
 #[pyclass]
+#[derive(Clone)]
 pub struct Transform {
     position: Vec3,
     rotation: Vec3,
@@ -127,6 +161,6 @@ impl Transform {
     }
 
     pub fn scale(&mut self, s: [f32; 3]) {
-        self.scale = Vec3::from(s);
+        self.scale *= Vec3::from(s);
     }
 }
