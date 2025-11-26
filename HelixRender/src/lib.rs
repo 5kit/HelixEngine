@@ -3,9 +3,7 @@ mod object;
 
 use pyo3::prelude::*;
 use scene::Scene;
-use object::MeshObject;
-use object::Transform;
-use object::Mesh;
+use object::{MeshObject, Transform, Mesh};
 
 #[pymodule]
 fn helix_render(_py: Python, m: &PyModule) -> PyResult<()> {

@@ -7,12 +7,11 @@ use std::fs::File;
 use std::io::{self, BufRead};
 
 #[pyclass]
+#[derive(Clone)]
 pub struct MeshObject {
-    #[pyo3(get, set)]
-    name: String,
-    mesh_index: usize,
-    #[pyo3(get, set)]
-    transform: Transform,
+    pub name: String,
+    pub mesh_index: usize,
+    pub transform: Transform,
 }
 
 #[pymethods]
