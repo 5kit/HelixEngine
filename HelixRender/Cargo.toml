@@ -1,0 +1,12 @@
+[package]
+name = "helix_render"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "helix_render"
+crate-type = ["cdylib"]  # Needed for Python extension
+
+[dependencies]
+pyo3 = { version = "0.19", features = ["extension-module"] }
+glam = "0.27"

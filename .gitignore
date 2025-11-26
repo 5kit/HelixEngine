@@ -4,7 +4,7 @@
 .DS_Store
 Thumbs.db
 *.swp
-*~
+*~*
 desktop.ini
 
 # ----------------------
@@ -19,6 +19,9 @@ __pycache__/
 dist/
 build/
 *.log
+*.sqlite3
+*.db
+*.bak
 
 # ----------------------
 # Rust / Cargo
@@ -26,6 +29,7 @@ build/
 target/
 **/*.rs.bk
 **/*.rlib
+Cargo.lock
 
 # ----------------------
 # Virtual environments
@@ -41,11 +45,15 @@ env/
 .vscode/
 *.sublime-workspace
 *.sublime-project
+*.vscode/settings.json
+*.vscode/tasks.json
+*.vscode/launch.json
 
 # ----------------------
-# Misc
+# Misc / temporary
 # ----------------------
 *.tmp
 *.bak
 *.swp
 *.lock
+*.DS_Store
