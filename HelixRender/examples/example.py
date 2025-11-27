@@ -4,13 +4,14 @@ import numpy as np
 
 Scene1 = Scene()
 path = "HelixRender/examples/cube.obj"
-Scene1.add_object("cube", path)
+Cube_mesh = Scene1.create_mesh(path)
+Cube_object = Scene1.add_object("cube")
+Scene1.apply_mesh_to_object(Cube_object, Cube_mesh)
 
-obj_handle = Scene1.get_object("cube")
-Scene1.translate_object(obj_handle, [0,1,0])
-Scene1.rotate_object(obj_handle, [0,pi/4,0])
-Scene1.scale_object(obj_handle, [1,1,1])
+Scene1.translate_object(Cube_object, [0,1,0])
+Scene1.rotate_object(Cube_object, [0,pi/4,0])
+Scene1.scale_object(Cube_object, [1,1,1])
 
-array = np.array(Scene1.get_object_matrix(obj_handle))
+array = np.array(Scene1.get_object_matrix(Cube_object))
 print(array.T)
 

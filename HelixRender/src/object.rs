@@ -10,20 +10,26 @@ use std::io::{self, BufRead};
 #[derive(Clone)]
 pub struct MeshObject {
     pub name: String,
-    pub mesh_index: usize,
+    pub mesh_index: Option<usize>,
     pub transform: Transform,
 }
 
 #[pymethods]
 impl MeshObject {
     #[new]
-    pub fn new(name: String, mesh_index: usize) -> Self {
+    pub fn new(name: String) -> Self {
         MeshObject {
             name,
-            mesh_index,
+            mesh_index: None,
             transform: Transform::new(),
         }
     }
+
+    pub fn set_mesh(&mut self, mesh_index: usize) {
+        self.mesh_index = Some(mesh_index);
+    }
+
+    // Transform setters
 
     pub fn set_scale(&mut self, s: [f32; 3]) {
         self.transform.scale = Vec3::from(s);
@@ -40,6 +46,7 @@ impl MeshObject {
 
 
 #[pyclass]
+#[derive(Clone)]
 pub struct Mesh {
     vertices: Vec<Vec3>,
     indices: Vec<usize>,
@@ -57,6 +64,13 @@ impl Mesh {
             polygons: Vec::new(),
             face_normals: Vec::new()
         }
+    }
+
+    pub fn clear(&mut self) {
+        self.vertices.clear();
+        self.indices.clear();
+        self.polygons.clear();
+        self.face_normals.clear();
     }
 
     pub fn load_obj(&mut self, path: &str)-> io::Result<()>  {
@@ -101,13 +115,6 @@ impl Mesh {
         }
 
         Ok(())
-    }
-
-    pub fn clear(&mut self) {
-        self.vertices.clear();
-        self.indices.clear();
-        self.polygons.clear();
-        self.face_normals.clear();
     }
 
     pub fn vertex_count(&self) -> usize {
