@@ -1,19 +1,21 @@
 use crate::object;
+use crate::camera;
 
 use pyo3::prelude::*;
 use object::{MeshObject, Mesh};
+use camera::Camera;
 
 #[pyclass]
 pub struct Scene {
-    #[pyo3(get, set)]
-    pub background_color: [f32; 3],
+    objects: Vec<Option<MeshObject>>,   // None when not in use
+    object_gen: Vec<u32>,               // represents the newest object in slot
 
-    // Not exposed to python
-    objects: Vec<Option<MeshObject>>, // None when not in use
-    object_gen: Vec<u32>, // represents the newest object in slot
+    cameras: Vec<Option<Camera>>,       // None when not in use
+    camera_gen: Vec<u32>,               // represents the newest object in slot
+    active_camera: usize,               // index of current in use camera
 
-    meshes: Vec<Option<Mesh>>, // None when not in use
-    mesh_gen: Vec<u32>, // represents the newest mesh in slot
+    meshes: Vec<Option<Mesh>>,          // None when not in use
+    mesh_gen: Vec<u32>,                 // represents the newest mesh in slot
 }
 
 #[pymethods]
@@ -21,9 +23,11 @@ impl Scene {
     #[new]
     pub fn new() -> Self {
         Scene {
-            background_color: [1.0, 1.0, 1.0],
             objects: Vec::new(),
             object_gen: Vec::new(),
+            cameras: Vec::new(Camera::new()),
+            camera_gen: Vec::new([0]),
+            active_camera: 0,
             meshes: Vec::new(),
             mesh_gen: Vec::new(),
         }
@@ -112,6 +116,44 @@ impl Scene {
     }
 
     // ---------------------------------------------
+    // Camera Management
+    // ---------------------------------------------
+
+    pub fn create_camera(&mut self, name: &str) -> PyResult<PyCameraHandle> {
+        let cam = Camera::new(name);
+
+        // Search for empty slot:
+        for i in 0..self.cameras.len() {
+            if self.cameras[i].is_none() {
+                // set slot to obj and increment generation
+                self.cameras[i] = Some(cam.clone());
+                return Ok(PyCameraHandle::new(i, self.camera_gen[i]));
+            }
+        }
+
+        // If no empty slots push new slot
+        self.cameras.push(Some(cam));
+        self.camera_gen.push(0);
+
+        return Ok(PyCameraHandle::new(self.cameras.len()-1, 0));
+    }
+
+    pub fn delete_camera(&mut self, h: &PyCameraHandle) {
+        if self.resolve_cam(h).is_some() {
+            if h.index != self.active_camera {
+                self.cameras[h.index] = None;
+                self.camera_gen[h.index] += 1;
+            }
+        }
+    }
+
+    //pub fn get_camera_view(&self, h: &PyCameraHandle) -> [[f32;4];4]
+    //pub fn get_camera_projection(&self, h: &PyCameraHandle) -> [[f32;4];4]
+    //pub fn translate_camera(&mut self, ...)
+    //pub fn rotate_camera(&mut self, ...)
+
+
+    // ---------------------------------------------
     // Mesh Management
     // ---------------------------------------------
 
@@ -182,6 +224,26 @@ impl Scene {
         }
     }
 
+
+    // Camera handle resolvers
+
+    fn resolve_cam(&self, h: &PyCameraHandle) -> Option<&MeshObject> {
+        if self.camera_gen[h.index] == h.generation {
+            self.cameras[h.index].as_ref()
+        } else {
+            None
+        }
+    }
+
+    fn resolve_cam_mut(&mut self, h: &PyCameraHandle) -> Option<&mut MeshObject> {
+        if self.camera_gen[h.index] == h.generation {
+            self.cameras[h.index].as_mut()
+        } else {
+            None
+        }
+    }
+
+
     // Mesh handle resolvers
 
     fn resolve_mesh(&self, h: &PyMeshHandle) -> Option<&Mesh> {
@@ -222,6 +284,25 @@ impl PyObjectHandle {
         }
     }
 }
+
+// Camera Handler for python
+#[pyclass]
+pub struct PyCameraHandle {
+    index: usize,
+    generation: u32,
+}
+
+#[pymethods]
+impl PyCameraHandle {
+    #[new]
+    pub fn new(index: usize, generation: u32) -> Self {
+        Self { 
+            index, 
+            generation,
+        }
+    }
+}
+
 
 // Mesh Handler for python
 #[pyclass]
