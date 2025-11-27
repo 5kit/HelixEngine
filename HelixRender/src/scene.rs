@@ -26,6 +26,7 @@ impl Scene {
         }
     }
 
+    // get object handler by name
     pub fn get_object(&self, name: &str) -> Option<PyObjectHandle> {
         for i in 0..self.objects.len() {
             if let Some(obj) = self.objects[i].as_ref() {
