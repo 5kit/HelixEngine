@@ -1,12 +1,10 @@
-use pyo3::prelude::*;
-use glam::Vec3;
 use glam::Mat4;
 use glam::Quat;
+use glam::Vec3;
 
 use std::fs::File;
 use std::io::{self, BufRead};
 
-#[pyclass]
 #[derive(Clone)]
 pub struct MeshObject {
     pub name: String,
@@ -14,9 +12,7 @@ pub struct MeshObject {
     pub transform: Transform,
 }
 
-#[pymethods]
 impl MeshObject {
-    #[new]
     pub fn new(name: String) -> Self {
         MeshObject {
             name,
@@ -44,25 +40,21 @@ impl MeshObject {
     }
 }
 
-
-#[pyclass]
 #[derive(Clone)]
 pub struct Mesh {
-    vertices: Vec<Vec3>,
+    pub vertices: Vec<Vec3>,
     indices: Vec<usize>,
     polygons: Vec<Vec<usize>>,
-    face_normals: Vec<Vec3>
+    face_normals: Vec<Vec3>,
 }
 
-#[pymethods]
 impl Mesh {
-    #[new]
     pub fn new() -> Self {
         Mesh {
             vertices: Vec::new(),
             indices: Vec::new(),
             polygons: Vec::new(),
-            face_normals: Vec::new()
+            face_normals: Vec::new(),
         }
     }
 
@@ -73,7 +65,7 @@ impl Mesh {
         self.face_normals.clear();
     }
 
-    pub fn load_obj(&mut self, path: &str)-> io::Result<()>  {
+    pub fn load_obj(&mut self, path: &str) -> io::Result<()> {
         self.clear();
 
         let file = File::open(path)?;
@@ -88,11 +80,11 @@ impl Mesh {
             match parts[0] {
                 "v" => {
                     // Vertex
-                    let x: f32 = parts[1].parse().unwrap(); 
+                    let x: f32 = parts[1].parse().unwrap();
                     let y: f32 = parts[2].parse().unwrap();
                     let z: f32 = parts[3].parse().unwrap();
-                    self.vertices.push(Vec3::new(x,y,z));
-                },
+                    self.vertices.push(Vec3::new(x, y, z));
+                }
                 "f" => {
                     // Face
                     let mut face = Vec::new();
@@ -108,8 +100,7 @@ impl Mesh {
                     let edge2 = self.vertices[face[2]] - self.vertices[face[0]];
                     let normal = edge1.cross(edge2).normalize();
                     self.face_normals.push(normal);
-
-                },
+                }
                 _ => {}
             }
         }
@@ -126,8 +117,6 @@ impl Mesh {
     }
 }
 
-
-#[pyclass]
 #[derive(Clone)]
 pub struct Transform {
     position: Vec3,
@@ -135,9 +124,7 @@ pub struct Transform {
     scale: Vec3,
 }
 
-#[pymethods]
 impl Transform {
-    #[new]
     pub fn new() -> Self {
         Transform {
             position: Vec3::ZERO,
@@ -146,27 +133,33 @@ impl Transform {
         }
     }
 
-    pub fn get_matrix(&self) -> [[f32; 4]; 4] {
+    pub fn get_matrix(&self) -> Mat4 {
+        // get quaternions for roll, pitch and yaw
         let roll = Quat::from_rotation_x(self.rotation.x);
         let pitch = Quat::from_rotation_y(self.rotation.y);
         let yaw = Quat::from_rotation_z(self.rotation.z);
 
+        // combine and normalize quaternion rotation
         let q = (yaw * pitch * roll).normalize();
 
-        let transform_matrix = Mat4::from_rotation_translation(q, self.position) * Mat4::from_scale(self.scale);
+        // convert quaternion into a 4x4 transformation matrix
+        // add translation and scale
+        let transform_matrix =
+            Mat4::from_rotation_translation(q, self.position) * Mat4::from_scale(self.scale);
 
-        transform_matrix.to_cols_array_2d()
+        // return as a 2D list
+        transform_matrix
     }
 
-    pub fn translate(&mut self, delta: [f32; 3]) {
+    pub fn translate(&mut self, delta: Vec3) {
         self.position += Vec3::from(delta);
     }
 
-    pub fn rotate(&mut self, delta: [f32; 3]) {
+    pub fn rotate(&mut self, delta: Vec3) {
         self.rotation += Vec3::from(delta);
     }
 
-    pub fn scale(&mut self, s: [f32; 3]) {
+    pub fn scale(&mut self, s: Vec3) {
         self.scale *= Vec3::from(s);
     }
 }

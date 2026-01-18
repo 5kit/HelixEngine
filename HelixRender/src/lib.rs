@@ -1,15 +1,31 @@
+mod camera;
+mod engine;
+mod mesh;
+mod mesh_object;
+mod resource_manager;
 mod scene;
-mod object;
+mod scene_manager;
+mod transform;
+
+use engine::Engine;
 
 use pyo3::prelude::*;
-use scene::Scene;
-use object::{MeshObject, Transform, Mesh};
 
 #[pymodule]
 fn helix_render(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_class::<Scene>()?;
-    m.add_class::<MeshObject>()?;
-    m.add_class::<Transform>()?;
-    m.add_class::<Mesh>()?;
+    m.add_class::<Engine>()?;
     Ok(())
 }
+
+/*
+ * ToDO:
+ * - UPDATE Docs
+ * - implement TransformNode -
+ * - implement Scene -
+ * - implment MeshObject, mesh -
+ * - implment handlers
+ * - implment parent child global transform
+ * - implment python interface
+ * - implment camera /
+ * - implment OpenGL GLSL rasterisation
+ */
