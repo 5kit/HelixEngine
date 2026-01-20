@@ -1,29 +1,13 @@
 use glam::{Mat4, Quat, Vec3};
 
-use crate::scene;
-use scene::Scene;
+use crate::general_handler::Handle;
 
 use pyo3::prelude::*;
 
-/*
- * These Classes Are for Transformation logic
- * Handler resolution is done in Scene
- * Not Exposed to python, including the handler:
- *  - TNH is exclusive for relationship logic
- */
-
-// Use handler rather then pointers for safe object storage
-// Objects Stored in Scene in Vec<Option>
-#[derive(Copy, Clone)]
-pub struct TransformNodeHandle {
-    index: usize,
-    generation: u32, // should match otherwise outdated Handler
-}
-
-impl TransformNodeHandle {
-    pub fn new(index: usize, generation: u32) -> Self {
-        Self { index, generation }
-    }
+#[pyclass]
+#[derive(Clone)]
+pub struct PyTransformNodeHandle {
+    pub handle: Handle,
 }
 
 // Node belongs to a Object (1 - 1)
@@ -34,8 +18,8 @@ pub struct TransformNode {
     pub local: Transform,
 
     // Parent and child Handlers
-    parent: Option<TransformNodeHandle>,
-    child: Vec<TransformNodeHandle>,
+    parent: Option<PyTransformNodeHandle>,
+    child: Vec<PyTransformNodeHandle>,
 
     // Pre-computed world Transform from parent
     pub world: Mat4,
@@ -44,7 +28,7 @@ pub struct TransformNode {
 
 impl TransformNode {
     // Initialise With parent (minimum root)
-    pub fn new(parent: Option<TransformNodeHandle>) -> Self {
+    pub fn new(parent: Option<PyTransformNodeHandle>) -> Self {
         TransformNode {
             local: Transform::new(),
 
@@ -54,6 +38,10 @@ impl TransformNode {
             world: Mat4::ZERO,
             dirty: true,
         }
+    }
+
+    pub fn add_child(&mut self, new_child: PyTransformNodeHandle) {
+        self.child.push(new_child);
     }
 }
 

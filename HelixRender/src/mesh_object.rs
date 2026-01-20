@@ -1,24 +1,16 @@
-use crate::transform;
-use transform::TransformNodeHandle;
+use crate::general_handler::Handle;
 
-use crate::mesh;
-use mesh::MeshHandle;
+use crate::transform::PyTransformNodeHandle;
+
+use crate::mesh::PyMeshHandle;
 
 use pyo3::prelude::*;
 
 // Mesh Object Handler for Scene
 #[pyclass]
-pub struct MeshObjectHandle {
-    pub index: usize,
-    pub generation: u32,
-}
-
-#[pymethods]
-impl MeshObjectHandle {
-    #[new]
-    pub fn new(index: usize, generation: u32) -> Self {
-        MeshObjectHandle { index, generation }
-    }
+#[derive(Clone)]
+pub struct PyMeshObjectHandle {
+    pub handle: Handle,
 }
 
 // Basic Data Strucutre
@@ -26,6 +18,6 @@ impl MeshObjectHandle {
 #[derive(Clone)]
 pub struct MeshObject {
     pub name: String,
-    pub mesh_handle: Option<MeshHandle>,
-    pub transform_node_handle: Option<TransformNodeHandle>,
+    pub mesh_handle: Option<PyMeshHandle>,
+    pub transform_node_handle: Option<PyTransformNodeHandle>,
 }

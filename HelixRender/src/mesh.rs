@@ -2,24 +2,18 @@ use glam::{Mat4, Quat, Vec3};
 use std::fs::File;
 use std::io::{self, BufRead};
 
+use crate::general_handler::Handle;
+
 use pyo3::prelude::*;
 
-// Mesh Resource Handler for Resource Manager
+// Pythoon exposed handle wrapper for handle type safety
 #[pyclass]
 #[derive(Clone)]
-pub struct MeshHandle {
-    pub index: usize,
-    pub generation: u32,
+pub struct PyMeshHandle {
+    pub handle: Handle,
 }
 
-#[pymethods]
-impl MeshHandle {
-    #[new]
-    pub fn new(index: usize, generation: u32) -> Self {
-        MeshHandle { index, generation }
-    }
-}
-
+// Mesh Object
 #[derive(Clone)]
 pub struct Mesh {
     pub vertices: Vec<Vec3>,
@@ -45,6 +39,7 @@ impl Mesh {
         self.face_normals.clear();
     }
 
+    // load obj data from provided obj file
     pub fn load_obj(&mut self, path: &str) -> io::Result<()> {
         self.clear();
 

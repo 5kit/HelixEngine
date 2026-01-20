@@ -35,7 +35,7 @@ pub struct Camera {
 
 impl Camera {
     pub fn new() -> Self {
-        Self {}
+        Camera {}
         //Camera {
         //    transform_node_handle: TransformNodeHandle::new(),
         //    fov: std::f32::consts::FRAC_PI_4, // 45 degrees
