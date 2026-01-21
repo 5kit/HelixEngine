@@ -14,10 +14,10 @@ pub struct PyMeshObjectHandle {
 }
 
 // Basic Data Strucutre
-// Most processing happens in Scene
+// Related Objects Stored elsewhere, refrenced here
 #[derive(Clone)]
 pub struct MeshObject {
     pub name: String,
     pub mesh_handle: Option<PyMeshHandle>,
-    pub transform_node_handle: Option<PyTransformNodeHandle>,
+    pub transform_node_handle: PyTransformNodeHandle,
 }

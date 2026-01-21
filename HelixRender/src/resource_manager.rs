@@ -30,7 +30,7 @@ impl ResourceManager {
         })
     }
 
-    pub fn delete_mesh(&mut self, handle: Handle) -> bool {
-        self.mesh_store.remove(handle).is_some()
+    pub fn delete_mesh(&mut self, mesh_handle: PyMeshHandle) -> bool {
+        self.mesh_store.remove(mesh_handle.handle).is_some()
     }
 }
