@@ -6,7 +6,7 @@ use pyo3::prelude::*;
  * Allows for single existance of objects and reuse of object slots via genrations
  * generations also invalidate outdated handlers.
  */
-
+#[derive(Clone)]
 pub struct ObjectStorage<T> {
     slots: Vec<Option<T>>,
     slot_gen: Vec<u32>,

@@ -1,29 +1,21 @@
 use glam::Mat4;
 use glam::Vec4;
 
-use crate::transform;
-use transform::TransformNodeHandle;
+use crate::general_handler::Handle;
+
+use crate::transform::PyTransformNodeHandle;
 
 use pyo3::prelude::*;
 
 // Camera Object Handler for Scene
 #[pyclass]
-pub struct CameraHandle {
-    index: usize,
-    generation: u32,
-}
-
-#[pymethods]
-impl CameraHandle {
-    #[new]
-    pub fn new(index: usize, generation: u32) -> Self {
-        Self { index, generation }
-    }
+pub struct PyCameraHandle {
+    handle: Handle,
 }
 
 #[derive(Clone)]
 pub struct Camera {
-    pub transform_node_handle: Option<TransformNodeHandle>,
+    pub transform_node_handle: PyTransformNodeHandle,
 
     pub fov: f32,    // field of view
     pub aspect: f32, // width / height
@@ -34,16 +26,15 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new() -> Self {
-        Camera {}
-        //Camera {
-        //    transform_node_handle: TransformNodeHandle::new(),
-        //    fov: std::f32::consts::FRAC_PI_4, // 45 degrees
-        //    aspect: 16.0 / 9.0,               // if problem, try flip
-        //    near: 0.1,
-        //    far: 1000.0,
-        //    background_color: [1.0, 1.0, 1.0],
-        //}
+    pub fn new(transform_node_handle: PyTransformNodeHandle) -> Self {
+        Camera {
+            transform_node_handle,
+            fov: std::f32::consts::FRAC_PI_4, // 45 degrees
+            aspect: 16.0 / 9.0,               // if problem, try flip
+            near: 0.1,
+            far: 1000.0,
+            background_color: [1.0, 1.0, 1.0],
+        }
     }
 
     pub fn get_projection_matrix(&self) -> Mat4 {

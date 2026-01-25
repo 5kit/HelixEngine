@@ -8,17 +8,19 @@ use pyo3::prelude::*;
 
 #[pyclass]
 pub struct Engine {
-    pub resourceManager: ResourceManager,
-    pub sceneManager: SceneManager,
+    #[pyo3(get)]
+    pub resource_manager: ResourceManager,
+    #[pyo3(get)]
+    pub scene_manager: SceneManager,
 }
 
 #[pymethods]
 impl Engine {
     #[new]
-    pub fn new() -> Self {
+    pub fn new(py: Python) -> Self {
         Engine {
-            resourceManager: ResourceManager::new(),
-            sceneManager: SceneManager::new(),
+            resource_manager: ResourceManager::new(),
+            scene_manager: SceneManager::new(py),
         }
     }
 }

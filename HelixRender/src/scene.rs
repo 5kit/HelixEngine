@@ -1,17 +1,20 @@
 use crate::mesh::PyMeshHandle;
 use crate::resource_manager::ResourceManager;
 
-use crate::general_handler::ObjectStorage;
+use crate::general_handler::{Handle, ObjectStorage};
 
 use crate::mesh_object::{self, PyMeshObjectHandle};
+use glam::Vec3;
 use mesh_object::MeshObject;
 
 use crate::transform::{self, PyTransformNodeHandle};
 use transform::TransformNode;
 
+use pyo3::exceptions::PyTypeError;
 use pyo3::prelude::*;
 
 #[pyclass]
+#[derive(Clone)]
 pub struct Scene {
     // Owner of: MeshObjects, Cameras, transformNode
     mesh_objects_storage: ObjectStorage<MeshObject>,
@@ -74,5 +77,142 @@ impl Scene {
         PyMeshObjectHandle {
             handle: self.mesh_objects_storage.insert(new_obj),
         }
+    }
+
+    // get name of object from obj handle
+    pub fn obj_name(&self, object_handle: PyMeshObjectHandle) -> PyResult<String> {
+        if let Some(obj) = self.mesh_objects_storage.resolve(&object_handle.handle) {
+            Ok(obj.name.to_string())
+        } else {
+            Err(PyErr::new::<PyTypeError, _>(
+                "Invalid Handle Error: Hanlde could not be Resolved!",
+            ))
+        }
+    }
+
+    // get transformation matrix obj from handle
+    pub fn obj_transform(&self, object_handle: PyMeshObjectHandle) -> PyResult<[[f32; 4]; 4]> {
+        Ok(self
+            .resolve_object_and_node(object_handle)?
+            .local
+            .get_matrix()
+            .to_cols_array_2d())
+    }
+
+    // translate obj by delta
+    pub fn obj_translate(
+        &mut self,
+        object_handle: PyMeshObjectHandle,
+        delta: [f32; 3],
+    ) -> PyResult<()> {
+        self.resolve_object_and_node_mut(object_handle)?
+            .local
+            .translate(delta);
+        Ok(())
+    }
+
+    // set obj position to pos
+    pub fn obj_set_pos(
+        &mut self,
+        object_handle: PyMeshObjectHandle,
+        pos: [f32; 3],
+    ) -> PyResult<()> {
+        self.resolve_object_and_node_mut(object_handle)?
+            .local
+            .position = Vec3::from(pos);
+        Ok(())
+    }
+
+    // rotate obj by delta
+    pub fn obj_rotate(
+        &mut self,
+        object_handle: PyMeshObjectHandle,
+        delta: [f32; 3],
+    ) -> PyResult<()> {
+        self.resolve_object_and_node_mut(object_handle)?
+            .local
+            .rotate(delta);
+        Ok(())
+    }
+
+    // set obj rotation
+    pub fn obj_set_rotatation(
+        &mut self,
+        object_handle: PyMeshObjectHandle,
+        euler: [f32; 3],
+    ) -> PyResult<()> {
+        self.resolve_object_and_node_mut(object_handle)?
+            .local
+            .rotation = Vec3::from(euler);
+        Ok(())
+    }
+
+    // scale obj by delta
+    pub fn obj_scale(
+        &mut self,
+        object_handle: PyMeshObjectHandle,
+        delta: [f32; 3],
+    ) -> PyResult<()> {
+        self.resolve_object_and_node_mut(object_handle)?
+            .local
+            .scale(delta);
+        Ok(())
+    }
+
+    // set obj scale
+    pub fn obj_set_scale(
+        &mut self,
+        object_handle: PyMeshObjectHandle,
+        scaler: [f32; 3],
+    ) -> PyResult<()> {
+        self.resolve_object_and_node_mut(object_handle)?.local.scale = Vec3::from(scaler);
+        Ok(())
+    }
+}
+
+// Helper functions that cant be exposed to python
+impl Scene {
+    fn resolve_object_and_node_mut(
+        &mut self,
+        object_handle: PyMeshObjectHandle,
+    ) -> PyResult<&mut TransformNode> {
+        let obj = self
+            .mesh_objects_storage
+            .resolve(&object_handle.handle)
+            .ok_or_else(|| {
+                PyErr::new::<PyTypeError, _>(
+                    "Invalid Handle Error: mesh Handle could not be Resolved!",
+                )
+            })?;
+
+        self.transform_node_storage
+            .resolve_mut(&obj.transform_node_handle.handle)
+            .ok_or_else(|| {
+                PyErr::new::<PyTypeError, _>(
+                    "Invalid Handle Error: node Handle could not be Resolved!",
+                )
+            })
+    }
+
+    fn resolve_object_and_node(
+        &self,
+        object_handle: PyMeshObjectHandle,
+    ) -> PyResult<&TransformNode> {
+        let obj = self
+            .mesh_objects_storage
+            .resolve(&object_handle.handle)
+            .ok_or_else(|| {
+                PyErr::new::<PyTypeError, _>(
+                    "Invalid Handle Error: mesh Handle could not be Resolved!",
+                )
+            })?;
+
+        self.transform_node_storage
+            .resolve(&obj.transform_node_handle.handle)
+            .ok_or_else(|| {
+                PyErr::new::<PyTypeError, _>(
+                    "Invalid Handle Error: node Handle could not be Resolved!",
+                )
+            })
     }
 }

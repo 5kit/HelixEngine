@@ -13,6 +13,7 @@ pub struct PyTransformNodeHandle {
 // Node belongs to a Object (1 - 1)
 // Which can have parent (1 - 1) or children (1 - 0..*) nodes
 // An objects Transform is stored SOLELY in its repersetitive node
+#[derive(Clone)]
 pub struct TransformNode {
     // Local Object Transform
     pub local: Transform,
@@ -46,11 +47,11 @@ impl TransformNode {
 }
 
 // Transform DataType for transformation matrix operations
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct Transform {
-    position: Vec3,
-    rotation: Vec3,
-    scale: Vec3,
+    pub position: Vec3,
+    pub rotation: Vec3,
+    pub scale: Vec3,
 }
 
 impl Transform {
@@ -77,18 +78,18 @@ impl Transform {
             Mat4::from_rotation_translation(q, self.position) * Mat4::from_scale(self.scale);
 
         // return as a 2D list
-        transform_matrix
+        transform_matrix.transpose()
     }
 
-    pub fn translate(&mut self, delta: Vec3) {
+    pub fn translate(&mut self, delta: [f32; 3]) {
         self.position += Vec3::from(delta);
     }
 
-    pub fn rotate(&mut self, delta: Vec3) {
+    pub fn rotate(&mut self, delta: [f32; 3]) {
         self.rotation += Vec3::from(delta);
     }
 
-    pub fn scale(&mut self, s: Vec3) {
+    pub fn scale(&mut self, s: [f32; 3]) {
         self.scale *= Vec3::from(s);
     }
 }

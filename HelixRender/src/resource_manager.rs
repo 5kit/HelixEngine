@@ -4,6 +4,7 @@ use crate::mesh::{Mesh, PyMeshHandle};
 use pyo3::prelude::*;
 
 #[pyclass]
+#[derive(Clone)]
 pub struct ResourceManager {
     // mesh store uses a general_handler wrapper
     mesh_store: ObjectStorage<Mesh>,

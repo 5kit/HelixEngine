@@ -20,13 +20,13 @@ fn helix_render(_py: Python, m: &PyModule) -> PyResult<()> {
 
 /*
  * ToDO:
+ * - implment handlers: mesh/, meshObj/, camera, transform/
  * - UPDATE Docs
- * - implement TransformNode -
- * - implement Scene -
- * - implment MeshObject, mesh -
- * - implment handlers
+ * - implement TransformNode /
+ * - implement Scene /
+ * - implment MeshObject, mesh /
  * - implment parent child global transform
- * - implment python interface
- * - implment camera /
+ * - implment python interface -
+ * - implment camera -
  * - implment OpenGL GLSL rasterisation
  */
