@@ -2,15 +2,16 @@ use glam::Mat4;
 use glam::Vec4;
 
 use crate::general_handler::Handle;
-
+use crate::scene::Scene;
 use crate::transform::PyTransformNodeHandle;
 
 use pyo3::prelude::*;
 
 // Camera Object Handler for Scene
 #[pyclass]
+#[derive(Clone)]
 pub struct PyCameraHandle {
-    handle: Handle,
+    pub handle: Handle,
 }
 
 #[derive(Clone)]

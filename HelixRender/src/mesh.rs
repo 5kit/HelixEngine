@@ -8,7 +8,7 @@ use pyo3::prelude::*;
 
 // Pythoon exposed handle wrapper for handle type safety
 #[pyclass]
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct PyMeshHandle {
     pub handle: Handle,
 }

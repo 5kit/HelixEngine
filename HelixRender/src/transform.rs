@@ -1,13 +1,32 @@
 use glam::{Mat4, Quat, Vec3};
 
+use crate::camera::PyCameraHandle;
 use crate::general_handler::Handle;
+use crate::mesh::PyMeshHandle;
+use crate::mesh_object::PyMeshObjectHandle;
+use crate::scene::Scene;
 
 use pyo3::prelude::*;
 
 #[pyclass]
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct PyTransformNodeHandle {
     pub handle: Handle,
+}
+
+#[pyclass]
+pub enum PyTransformObjectHandle {
+    MeshObject(PyMeshObjectHandle),
+    Camera(PyCameraHandle),
+}
+
+impl PyTransformObjectHandle {
+    fn resolve_node_handle(&self, scene: &Scene) -> Option<PyTransformNodeHandle> {
+        match self {
+            PyTransformObjectHandle::MeshObject(h) => h.resolve_node_handle(scene),
+            PyTransformObjectHandle::Camera(h) => h.resolve_node_handle(scene),
+        }
+    }
 }
 
 // Node belongs to a Object (1 - 1)
@@ -19,8 +38,8 @@ pub struct TransformNode {
     pub local: Transform,
 
     // Parent and child Handlers
-    parent: Option<PyTransformNodeHandle>,
-    child: Vec<PyTransformNodeHandle>,
+    pub parent: Option<PyTransformNodeHandle>,
+    pub children: Vec<PyTransformNodeHandle>,
 
     // Pre-computed world Transform from parent
     pub world: Mat4,
@@ -34,7 +53,7 @@ impl TransformNode {
             local: Transform::new(),
 
             parent,
-            child: Vec::new(),
+            children: Vec::new(),
 
             world: Mat4::ZERO,
             dirty: true,
@@ -42,7 +61,7 @@ impl TransformNode {
     }
 
     pub fn add_child(&mut self, new_child: PyTransformNodeHandle) {
-        self.child.push(new_child);
+        self.children.push(new_child);
     }
 }
 
@@ -77,7 +96,6 @@ impl Transform {
         let transform_matrix =
             Mat4::from_rotation_translation(q, self.position) * Mat4::from_scale(self.scale);
 
-        // return as a 2D list
         transform_matrix.transpose()
     }
 

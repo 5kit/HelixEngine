@@ -37,3 +37,8 @@ print("\n>>> Testing Rotation & Scale")
 scene.obj_set_rotatation(cube, [0.0, 1.5708, 0.0])
 scene.obj_set_scale(cube, [2.0, 2.0, 2.0])
 print_matrix("After 90deg Y-Rot & 2x Scale", scene.obj_transform(cube))
+
+# 6. Testing Mesh Loading & Assigning
+print("\n>>> Testing Mesh Loading & Assigning")
+obj_mesh = scene.obj_mesh(cube)
+print(rm.get_mesh(obj_mesh))
