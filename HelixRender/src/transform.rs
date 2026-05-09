@@ -14,19 +14,20 @@ pub struct PyTransformNodeHandle {
     pub handle: Handle,
 }
 
+// handle for any Transfor Object
 #[pyclass]
-pub enum PyTransformObjectHandle {
-    MeshObject(PyMeshObjectHandle),
-    Camera(PyCameraHandle),
+#[derive(Clone, Copy)]
+pub struct PyTransformObjectHandle {
+    pub identity: TransformType,
+    pub handle: Handle,
 }
 
-impl PyTransformObjectHandle {
-    fn resolve_node_handle(&self, scene: &Scene) -> Option<PyTransformNodeHandle> {
-        match self {
-            PyTransformObjectHandle::MeshObject(h) => h.resolve_node_handle(scene),
-            PyTransformObjectHandle::Camera(h) => h.resolve_node_handle(scene),
-        }
-    }
+// identify any objects with a transform
+#[derive(Clone, Copy)]
+pub enum TransformType {
+    MeshObject,
+    Camera,
+    // add more later (light, collider, ect...)
 }
 
 // Node belongs to a Object (1 - 1)

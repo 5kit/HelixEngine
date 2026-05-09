@@ -1,10 +1,7 @@
 use crate::general_handler::Handle;
-
-use crate::scene::Scene;
-
-use crate::transform::PyTransformNodeHandle;
-
 use crate::mesh::PyMeshHandle;
+use crate::scene::Scene;
+use crate::transform::{PyTransformNodeHandle, PyTransformObjectHandle, TransformType};
 
 use pyo3::exceptions::PyTypeError;
 use pyo3::prelude::*;
@@ -14,6 +11,17 @@ use pyo3::prelude::*;
 #[derive(Clone)]
 pub struct PyMeshObjectHandle {
     pub handle: Handle,
+}
+
+impl PyMeshObjectHandle {
+    pub fn from_transform(obj: PyTransformObjectHandle) -> PyResult<Self> {
+        match obj.identity {
+            TransformType::MeshObject => Ok(Self { handle: obj.handle }),
+            _ => Err(PyErr::new::<pyo3::exceptions::PyTypeError, _>(
+                "Expected MeshObject",
+            )),
+        }
+    }
 }
 
 // Basic Data Strucutre

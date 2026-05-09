@@ -2,9 +2,9 @@ use glam::Mat4;
 use glam::Vec4;
 
 use crate::general_handler::Handle;
-use crate::scene::Scene;
-use crate::transform::PyTransformNodeHandle;
+use crate::transform::{PyTransformNodeHandle, PyTransformObjectHandle, TransformType};
 
+use pyo3::exceptions::PyTypeError;
 use pyo3::prelude::*;
 
 // Camera Object Handler for Scene
@@ -12,6 +12,15 @@ use pyo3::prelude::*;
 #[derive(Clone)]
 pub struct PyCameraHandle {
     pub handle: Handle,
+}
+
+impl PyCameraHandle {
+    pub fn from_transform(obj: PyTransformObjectHandle) -> PyResult<Self> {
+        match obj.identity {
+            TransformType::Camera => Ok(Self { handle: obj.handle }),
+            _ => Err(PyTypeError::new_err("Expected Camera")),
+        }
+    }
 }
 
 #[derive(Clone)]
