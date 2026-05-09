@@ -1,10 +1,6 @@
 use glam::{Mat4, Quat, Vec3};
 
-use crate::camera::PyCameraHandle;
 use crate::general_handler::Handle;
-use crate::mesh::PyMeshHandle;
-use crate::mesh_object::PyMeshObjectHandle;
-use crate::scene::Scene;
 
 use pyo3::prelude::*;
 
