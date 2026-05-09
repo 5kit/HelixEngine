@@ -6,7 +6,7 @@ use crate::general_handler::{Handle, ObjectStorage};
 use crate::mesh_object::{MeshObject, PyMeshObjectHandle};
 use glam::{Mat4, Vec3};
 
-use crate::camera::{Camera, PyCameraHandle};
+use crate::camera::{self, Camera, PyCameraHandle};
 
 use crate::transform::{
     PyTransformNodeHandle, PyTransformObjectHandle, TransformNode, TransformType,
@@ -64,27 +64,26 @@ impl Scene {
         &mut self,
         parent_node_handle: Option<PyTransformNodeHandle>,
     ) -> PyTransformNodeHandle {
-        // Create Node, insert into Storage and get Handle
-        let new_node = TransformNode::new(parent_node_handle.clone());
+        // Default to root if no parent supplied
+        let parent_handle = parent_node_handle.unwrap_or_else(|| self.root.clone());
+
+        // Create node with actual parent
         let new_node_handle = PyTransformNodeHandle {
-            handle: self.transform_node_storage.insert(new_node),
+            handle: self
+                .transform_node_storage
+                .insert(TransformNode::new(Some(parent_handle.clone()))),
         };
 
-        // Add the new child to parent ( if exists )
-        if let Some(node_handle) = parent_node_handle.as_ref() {
-            match self.transform_node_storage.resolve_mut(&node_handle.handle) {
-                Some(node) => node.add_child(new_node_handle.clone()),
-                None => eprintln!("Warning: invalid parent node handle!"),
-            }
+        // Register child with parent
+        if let Some(parent_node) = self
+            .transform_node_storage
+            .resolve_mut(&parent_handle.handle)
+        {
+            parent_node.add_child(new_node_handle.clone());
         } else {
-            // Parent becomes root if no parent given
-            match self.transform_node_storage.resolve_mut(&self.root.handle) {
-                Some(node) => node.add_child(new_node_handle.clone()),
-                None => eprintln!("Warning: invalid parent node handle!"),
-            }
+            eprintln!("Warning: invalid parent node handle!");
         }
 
-        // Return hande
         new_node_handle
     }
 
@@ -103,7 +102,7 @@ impl Scene {
         name: String,
         mesh: PyMeshHandle,
         parent: Option<PyMeshObjectHandle>,
-    ) -> PyMeshObjectHandle {
+    ) -> PyResult<PyMeshObjectHandle> {
         let parent_node_handle = parent.and_then(|parent_object_handle| {
             self.mesh_objects_storage
                 .resolve(&parent_object_handle.handle)
@@ -116,9 +115,10 @@ impl Scene {
             mesh_handle: mesh,
             transform_node_handle: new_transform_node_handle,
         };
-        PyMeshObjectHandle {
+
+        Ok(PyMeshObjectHandle {
             handle: self.mesh_objects_storage.insert(new_obj),
-        }
+        })
     }
 
     // get name of object from obj handle
@@ -221,9 +221,31 @@ impl Scene {
     // Camera Object Methods TODO
     // --------------------------------------------
 
-    pub fn new_camera(&mut self) {}
+    // Insert new camera with transform Node
+    pub fn new_camera(
+        &mut self,
+        parent: Option<PyTransformObjectHandle>,
+    ) -> PyResult<PyCameraHandle> {
+        let parent_node_handle = parent.and_then(|parent_object_handle| {
+            self.camera_object_storage
+                .resolve(&parent_object_handle.handle)
+                .map(|parent_obj| parent_obj.transform_node_handle.clone())
+        });
 
-    pub fn set_active_camera(&mut self) {}
+        let new_transform_node_handle = self.create_transform_node(parent_node_handle);
+
+        let new_cam = Camera::new(new_transform_node_handle);
+
+        Ok(PyCameraHandle {
+            handle: self.camera_object_storage.insert(new_cam),
+        })
+    }
+
+    pub fn set_active_camera(&mut self, cam: PyCameraHandle) -> PyResult<()> {
+        self.resolve_camera(&cam)?;
+        self.active_camera = cam;
+        Ok(())
+    }
 
     pub fn translate_camera(&mut self) {}
 
