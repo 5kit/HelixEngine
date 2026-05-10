@@ -21,6 +21,13 @@ impl PyCameraHandle {
             _ => Err(PyTypeError::new_err("Expected Camera")),
         }
     }
+
+    pub fn to_transform(&self) -> PyTransformObjectHandle {
+        PyTransformObjectHandle {
+            identity: TransformType::Camera,
+            handle: self.handle,
+        }
+    }
 }
 
 #[derive(Clone)]

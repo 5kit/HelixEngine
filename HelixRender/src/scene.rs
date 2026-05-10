@@ -28,6 +28,12 @@ pub struct Scene {
     root: PyTransformNodeHandle,
 }
 
+// ------------------------------------------------------------------
+//  TODO:
+//  - finish camera functions
+//  - add validation to check weather handles belong to the scene
+// ------------------------------------------------------------------
+
 #[pymethods]
 impl Scene {
     #[new]
@@ -87,8 +93,48 @@ impl Scene {
         new_node_handle
     }
 
+    fn apply_transform(
+        &mut self,
+        object_handle: PyTransformObjectHandle,
+        t_delta: Option<[f32; 3]>,
+        r_delta: Option<[f32; 3]>,
+        s_delta: Option<[f32; 3]>,
+    ) -> PyResult<()> {
+        self.with_transform_mut(&object_handle, |node| {
+            if let Some(t) = t_delta {
+                node.local.position += Vec3::from_array(t);
+            }
+            if let Some(r) = r_delta {
+                node.local.rotation += Vec3::from_array(r);
+            }
+            if let Some(s) = s_delta {
+                node.local.scale += Vec3::from_array(s);
+            }
+        })
+    }
+
+    fn set_transform(
+        &mut self,
+        object_handle: PyTransformObjectHandle,
+        t_val: Option<[f32; 3]>,
+        r_val: Option<[f32; 3]>,
+        s_val: Option<[f32; 3]>,
+    ) -> PyResult<()> {
+        self.with_transform_mut(&object_handle, |node| {
+            if let Some(t) = t_val {
+                node.local.position = Vec3::from_array(t);
+            }
+            if let Some(r) = r_val {
+                node.local.rotation = Vec3::from_array(r);
+            }
+            if let Some(s) = s_val {
+                node.local.scale = Vec3::from_array(s);
+            }
+        })
+    }
+
     // A lazy update to all dirty nodes starting from root
-    pub fn update_dirties(&mut self) {
+    pub fn update_dirty_transforms(&mut self) {
         self.update_dirty_rec(self.root.clone(), Mat4::IDENTITY, false);
     }
 
@@ -103,13 +149,17 @@ impl Scene {
         mesh: PyMeshHandle,
         parent: Option<PyMeshObjectHandle>,
     ) -> PyResult<PyMeshObjectHandle> {
-        let parent_node_handle = parent.and_then(|parent_object_handle| {
-            self.mesh_objects_storage
-                .resolve(&parent_object_handle.handle)
-                .map(|parent_obj| parent_obj.transform_node_handle.clone())
-        });
+        let parent_node_handle = match parent {
+            Some(parent_handle) => {
+                let parent_obj = self.resolve_mesh_object(&parent_handle)?;
+
+                Some(parent_obj.transform_node_handle.clone())
+            }
+            None => None,
+        };
 
         let new_transform_node_handle = self.create_transform_node(parent_node_handle);
+
         let new_obj = MeshObject {
             name,
             mesh_handle: mesh,
@@ -123,13 +173,7 @@ impl Scene {
 
     // get name of object from obj handle
     pub fn obj_name(&self, object_handle: PyMeshObjectHandle) -> PyResult<String> {
-        if let Some(obj) = self.mesh_objects_storage.resolve(&object_handle.handle) {
-            Ok(obj.name.to_string())
-        } else {
-            Err(PyErr::new::<PyTypeError, _>(
-                "Invalid Handle Error: Hanlde could not be Resolved!",
-            ))
-        }
+        Ok(self.resolve_mesh_object(&object_handle)?.name.clone())
     }
 
     // get transformation matrix obj from handle
@@ -146,9 +190,7 @@ impl Scene {
         object_handle: PyMeshObjectHandle,
         delta: [f32; 3],
     ) -> PyResult<()> {
-        self.with_mesh_transform_mut(&object_handle, |node| {
-            node.local.translate(delta);
-        })
+        self.apply_transform(object_handle.to_transform(), Some(delta), None, None)
     }
 
     // set obj position to pos
@@ -157,9 +199,7 @@ impl Scene {
         object_handle: PyMeshObjectHandle,
         pos: [f32; 3],
     ) -> PyResult<()> {
-        self.with_mesh_transform_mut(&object_handle, |node| {
-            node.local.position = Vec3::from(pos);
-        })
+        self.set_transform(object_handle.to_transform(), Some(pos), None, None)
     }
 
     // rotate obj by delta
@@ -168,9 +208,7 @@ impl Scene {
         object_handle: PyMeshObjectHandle,
         delta: [f32; 3],
     ) -> PyResult<()> {
-        self.with_mesh_transform_mut(&object_handle, |node| {
-            node.local.rotate(delta);
-        })
+        self.apply_transform(object_handle.to_transform(), None, Some(delta), None)
     }
 
     // set obj rotation
@@ -179,9 +217,7 @@ impl Scene {
         object_handle: PyMeshObjectHandle,
         euler: [f32; 3],
     ) -> PyResult<()> {
-        self.with_mesh_transform_mut(&object_handle, |node| {
-            node.local.rotation = Vec3::from(euler);
-        })
+        self.set_transform(object_handle.to_transform(), None, Some(euler), None)
     }
 
     // scale obj by delta
@@ -190,9 +226,7 @@ impl Scene {
         object_handle: PyMeshObjectHandle,
         delta: [f32; 3],
     ) -> PyResult<()> {
-        self.with_mesh_transform_mut(&object_handle, |node| {
-            node.local.scale(delta);
-        })
+        self.apply_transform(object_handle.to_transform(), None, None, Some(delta))
     }
 
     // set obj scale
@@ -201,20 +235,15 @@ impl Scene {
         object_handle: PyMeshObjectHandle,
         scaler: [f32; 3],
     ) -> PyResult<()> {
-        self.with_mesh_transform_mut(&object_handle, |node| {
-            node.local.scale = Vec3::from(scaler);
-        })
+        self.set_transform(object_handle.to_transform(), None, None, Some(scaler))
     }
 
     // get mesh handle from object handle
     pub fn obj_mesh(&self, object_handle: PyMeshObjectHandle) -> PyResult<PyMeshHandle> {
-        if let Some(obj) = self.mesh_objects_storage.resolve(&object_handle.handle) {
-            Ok(obj.mesh_handle.clone())
-        } else {
-            Err(PyErr::new::<PyTypeError, _>(
-                "Invalid Handle Error: Handle could not be Resolved!",
-            ))
-        }
+        Ok(self
+            .resolve_mesh_object(&object_handle)?
+            .mesh_handle
+            .clone())
     }
 
     // --------------------------------------------
@@ -226,11 +255,10 @@ impl Scene {
         &mut self,
         parent: Option<PyTransformObjectHandle>,
     ) -> PyResult<PyCameraHandle> {
-        let parent_node_handle = parent.and_then(|parent_object_handle| {
-            self.camera_object_storage
-                .resolve(&parent_object_handle.handle)
-                .map(|parent_obj| parent_obj.transform_node_handle.clone())
-        });
+        let parent_node_handle = match parent {
+            Some(h) => Some(self.resolve_transform_handle(&h)?),
+            None => None,
+        };
 
         let new_transform_node_handle = self.create_transform_node(parent_node_handle);
 
@@ -247,16 +275,47 @@ impl Scene {
         Ok(())
     }
 
-    pub fn translate_camera(&mut self) {}
+    // translate camera by delta
+    pub fn camera_translate(
+        &mut self,
+        camera_handle: PyCameraHandle,
+        delta: [f32; 3],
+    ) -> PyResult<()> {
+        self.apply_transform(camera_handle.to_transform(), Some(delta), None, None)
+    }
 
-    pub fn rotate_camera(&mut self) {}
+    // set camera position to pos
+    pub fn camera_set_pos(&mut self, camera_handle: PyCameraHandle, pos: [f32; 3]) -> PyResult<()> {
+        self.set_transform(camera_handle.to_transform(), Some(pos), None, None)
+    }
+
+    // rotate camera by delta
+    pub fn camera_rotate(
+        &mut self,
+        camera_handle: PyCameraHandle,
+        delta: [f32; 3],
+    ) -> PyResult<()> {
+        self.apply_transform(camera_handle.to_transform(), None, Some(delta), None)
+    }
+
+    // set camera rotation
+    pub fn camera_set_rotation(
+        &mut self,
+        camera_handle: PyCameraHandle,
+        euler: [f32; 3],
+    ) -> PyResult<()> {
+        self.set_transform(camera_handle.to_transform(), None, Some(euler), None)
+    }
 
     pub fn render(&self) {}
 
     pub fn render_from(&self) {}
 }
 
+// -----------------------------------------------------
 // Helper functions that cant be exposed to python
+// -----------------------------------------------------
+
 impl Scene {
     // Generic Handle -> obj resolvers
     // generic storage with ownership lifetime
@@ -301,8 +360,8 @@ impl Scene {
         Self::resolve_mut(&mut self.transform_node_storage, h.handle)
     }
 
-    // TrasnfromObjectHandle -> TransformHandle
-    pub fn get_transform_handle(
+    // TransformObjectHandle -> TransformHandle
+    pub fn resolve_transform_handle(
         &self,
         h: &PyTransformObjectHandle,
     ) -> PyResult<PyTransformNodeHandle> {
@@ -321,27 +380,14 @@ impl Scene {
         }
     }
 
-    // --------------------------------------------
-    // Transform Helpers
-    // --------------------------------------------
-
-    // MeshObjectHandle -> mutable TransformNode
-    fn resolve_mesh_node_mut(&mut self, h: &PyMeshObjectHandle) -> PyResult<&mut TransformNode> {
-        // short-lived borrow of mesh object
-        let node_handle = {
-            let obj = self.resolve_mesh_object(h)?;
-            obj.transform_node_handle.clone()
-        };
-
-        self.resolve_transform_node_mut(&node_handle)
-    }
-
     // Generic transform mutator wrapper
-    fn with_mesh_transform_mut<F>(&mut self, h: &PyMeshObjectHandle, f: F) -> PyResult<()>
+    fn with_transform_mut<F>(&mut self, h: &PyTransformObjectHandle, f: F) -> PyResult<()>
     where
         F: FnOnce(&mut TransformNode),
     {
-        let node = self.resolve_mesh_node_mut(h)?;
+        let node_handle = self.resolve_transform_handle(h)?;
+
+        let node = self.resolve_transform_node_mut(&node_handle)?;
 
         f(node);
         node.dirty = true;

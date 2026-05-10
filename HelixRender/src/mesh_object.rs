@@ -22,6 +22,13 @@ impl PyMeshObjectHandle {
             )),
         }
     }
+
+    pub fn to_transform(&self) -> PyTransformObjectHandle {
+        PyTransformObjectHandle {
+            identity: TransformType::MeshObject,
+            handle: self.handle,
+        }
+    }
 }
 
 // Basic Data Strucutre
