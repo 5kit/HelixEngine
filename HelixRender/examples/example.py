@@ -20,25 +20,25 @@ cube_mesh = rm.load_mesh("examples/cube.obj")
 # 3. Basic Object Creation & Properties
 print(">>> Testing Basic Object Creation")
 cube = scene.create_mesh_object("ParentCube", cube_mesh, None)
-name = scene.obj_name(cube)
+name = scene.object_get_name(cube)
 print(f"Created Object Name: {name}")
 
 # 4. Testing Position & Translation
 print("\n>>> Testing Translation")
-scene.obj_set_pos(cube, [1.0, 2.0, 3.0])
-print_matrix("After Set Pos [1, 2, 3]", scene.obj_transform(cube))
+scene.object_set_pos(cube, [1.0, 2.0, 3.0])
+print_matrix("After Set Pos [1, 2, 3]", scene.object_get_transform(cube))
 
-scene.obj_translate(cube, [10.0, 0.0, -1.0])
-print_matrix("After Translate [10, 0, -1]", scene.obj_transform(cube))
+scene.object_translate(cube, [10.0, 0.0, -1.0])
+print_matrix("After Translate [10, 0, -1]", scene.object_get_transform(cube))
 
 # 5. Testing Rotation & Scale
 print("\n>>> Testing Rotation & Scale")
 # Rotate 90 degrees (approx 1.57 rad) around Y axis
-scene.obj_set_rotatation(cube, [0.0, 1.5708, 0.0])
-scene.obj_set_scale(cube, [2.0, 2.0, 2.0])
-print_matrix("After 90deg Y-Rot & 2x Scale", scene.obj_transform(cube))
+scene.object_set_rotation(cube, [0.0, 1.5708, 0.0])
+scene.object_set_scale(cube, [2.0, 2.0, 2.0])
+print_matrix("After 90deg Y-Rot & 2x Scale", scene.object_get_transform(cube))
 
 # 6. Testing Mesh Loading & Assigning
 print("\n>>> Testing Mesh Loading & Assigning")
-obj_mesh = scene.obj_mesh(cube)
+obj_mesh = scene.object_get_mesh(cube)
 print(rm.get_mesh(obj_mesh))

@@ -80,20 +80,17 @@ impl Transform {
     }
 
     pub fn get_matrix(&self) -> Mat4 {
-        // get quaternions for roll, pitch and yaw
-        let roll = Quat::from_rotation_x(self.rotation.x);
-        let pitch = Quat::from_rotation_y(self.rotation.y);
-        let yaw = Quat::from_rotation_z(self.rotation.z);
+        // get rotation quaternions for pitch, yaw and roll
+        let q = Quat::from_euler(
+            glam::EulerRot::XYZ,
+            self.rotation.x, // pitch
+            self.rotation.y, // yaw
+            self.rotation.z, // roll
+        );
 
-        // combine and normalize quaternion rotation
-        let q = (yaw * pitch * roll).normalize();
-
-        // convert quaternion into a 4x4 transformation matrix
-        // add translation and scale
-        let transform_matrix =
-            Mat4::from_rotation_translation(q, self.position) * Mat4::from_scale(self.scale);
-
-        transform_matrix.transpose()
+        // combine scale, rotation and translation into 1 4x4 matrix
+        let transform_matrix = Mat4::from_scale_rotation_translation(self.scale, q, self.position);
+        transform_matrix.transpose() // may need to remove if causing shader error
     }
 
     pub fn translate(&mut self, delta: [f32; 3]) {

@@ -30,8 +30,9 @@ pub struct Scene {
 
 // ------------------------------------------------------------------
 //  TODO:
-//  - finish camera functions
+//  - add scene handling + engine handling
 //  - add validation to check weather handles belong to the scene
+//  - simplify python interface
 // ------------------------------------------------------------------
 
 #[pymethods]
@@ -172,12 +173,15 @@ impl Scene {
     }
 
     // get name of object from obj handle
-    pub fn obj_name(&self, object_handle: PyMeshObjectHandle) -> PyResult<String> {
+    pub fn object_get_name(&self, object_handle: PyMeshObjectHandle) -> PyResult<String> {
         Ok(self.resolve_mesh_object(&object_handle)?.name.clone())
     }
 
     // get transformation matrix obj from handle
-    pub fn obj_transform(&self, object_handle: PyMeshObjectHandle) -> PyResult<[[f32; 4]; 4]> {
+    pub fn object_get_transform(
+        &self,
+        object_handle: PyMeshObjectHandle,
+    ) -> PyResult<[[f32; 4]; 4]> {
         let obj = self.resolve_mesh_object(&object_handle)?;
         let node = self.resolve_transform_node(&obj.transform_node_handle)?;
 
@@ -185,7 +189,7 @@ impl Scene {
     }
 
     // translate obj by delta
-    pub fn obj_translate(
+    pub fn object_translate(
         &mut self,
         object_handle: PyMeshObjectHandle,
         delta: [f32; 3],
@@ -194,7 +198,7 @@ impl Scene {
     }
 
     // set obj position to pos
-    pub fn obj_set_pos(
+    pub fn object_set_pos(
         &mut self,
         object_handle: PyMeshObjectHandle,
         pos: [f32; 3],
@@ -203,7 +207,7 @@ impl Scene {
     }
 
     // rotate obj by delta
-    pub fn obj_rotate(
+    pub fn object_rotate(
         &mut self,
         object_handle: PyMeshObjectHandle,
         delta: [f32; 3],
@@ -212,7 +216,7 @@ impl Scene {
     }
 
     // set obj rotation
-    pub fn obj_set_rotation(
+    pub fn object_set_rotation(
         &mut self,
         object_handle: PyMeshObjectHandle,
         euler: [f32; 3],
@@ -221,7 +225,7 @@ impl Scene {
     }
 
     // scale obj by delta
-    pub fn obj_scale(
+    pub fn object_scale(
         &mut self,
         object_handle: PyMeshObjectHandle,
         delta: [f32; 3],
@@ -230,7 +234,7 @@ impl Scene {
     }
 
     // set obj scale
-    pub fn obj_set_scale(
+    pub fn object_set_scale(
         &mut self,
         object_handle: PyMeshObjectHandle,
         scaler: [f32; 3],
@@ -239,7 +243,7 @@ impl Scene {
     }
 
     // get mesh handle from object handle
-    pub fn obj_mesh(&self, object_handle: PyMeshObjectHandle) -> PyResult<PyMeshHandle> {
+    pub fn object_get_mesh(&self, object_handle: PyMeshObjectHandle) -> PyResult<PyMeshHandle> {
         Ok(self
             .resolve_mesh_object(&object_handle)?
             .mesh_handle
@@ -269,10 +273,19 @@ impl Scene {
         })
     }
 
+    // change active camera in scene
     pub fn set_active_camera(&mut self, cam: PyCameraHandle) -> PyResult<()> {
         self.resolve_camera(&cam)?;
         self.active_camera = cam;
         Ok(())
+    }
+
+    // get transformation matrix camera from handle
+    pub fn camera_get_transform(&self, camera_handle: PyCameraHandle) -> PyResult<[[f32; 4]; 4]> {
+        let cam = self.resolve_camera(&camera_handle)?;
+        let node = self.resolve_transform_node(&cam.transform_node_handle)?;
+
+        Ok(node.local.get_matrix().to_cols_array_2d())
     }
 
     // translate camera by delta
